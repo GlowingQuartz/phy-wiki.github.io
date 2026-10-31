@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phy-Wiki</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+<style>
+:root{--bg:#eef1f4;--sf:#fff;--ink:#14202b;--mu:#5a6a78;--ln:#cdd6de;--ac:#0b6e6e;--ai:#a8520a;--sd:#3b5b8c}
+@media(prefers-color-scheme:dark){:root{--bg:#10171d;--sf:#18212a;--ink:#e6ecf1;--mu:#93a3b1;--ln:#2b3844;--ac:#4fc3c3;--ai:#f0a35e;--sd:#8fb2e8}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Source Serif 4",Georgia,serif}
+.ui,button,input,select,summary{font-family:"IBM Plex Sans",system-ui,sans-serif}
+header{padding:2rem 1rem 1rem;max-width:860px;margin:auto}
+h1{margin:0;font-size:2.2rem;letter-spacing:-.02em;font-weight:600}h1 span{color:var(--ac)}
+.sub{color:var(--mu);margin:.2rem 0 1.2rem}
+form{display:flex;gap:.5rem}input[type=search]{flex:1;padding:.8rem 1rem;font-size:1rem;border:1px solid var(--ln);border-radius:6px;background:var(--sf);color:var(--ink)}
+button{padding:.6rem 1rem;border:1px solid var(--ac);background:var(--ac);color:var(--bg);border-radius:6px;cursor:pointer;font-size:.9rem}
+button.g{background:transparent;color:var(--ac)}button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+.bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem;font-size:.85rem;color:var(--mu);align-items:center}
+main{max-width:860px;margin:auto;padding:0 1rem 3rem}
+article{background:var(--sf);border:1px solid var(--ln);border-left:5px solid var(--sd);border-radius:6px;padding:1.2rem 1.4rem;margin:1rem 0}
+article.ai{border-left-color:var(--ai)}article.user{border-left-color:var(--ac)}
+article h2{margin:.2rem 0;font-size:1.35rem;line-height:1.3}
+.badge{font:500 .78rem "IBM Plex Sans";color:var(--mu)}.badge b{color:var(--sd)}article.ai .badge b{color:var(--ai)}article.user .badge b{color:var(--ac)}
+.res{background:var(--bg);border-radius:6px;padding:.4rem .8rem;overflow-x:auto;margin:.8rem 0}
+ol{padding-left:1.3rem}ol li{margin:.9rem 0}li .why{color:var(--mu);font-size:.93rem}
+.cond span{display:inline-block;border:1px solid var(--ln);border-radius:4px;padding:0 .5rem;margin:0 .3rem .3rem 0;font:.82rem "IBM Plex Sans"}
+details{margin:.6rem 0}summary{cursor:pointer;font-weight:600;font-size:.9rem}
+.src li,.ext li{font-size:.92rem}a{color:var(--ac)}
+.note{color:var(--mu);font:.88rem "IBM Plex Sans";margin:1rem 0}
+dialog{border:1px solid var(--ln);border-radius:8px;background:var(--sf);color:var(--ink);max-width:440px;width:92%}
+dialog label{display:block;margin:.7rem 0 .2rem;font:500 .85rem "IBM Plex Sans"}dialog input,dialog select{width:100%;padding:.5rem;border:1px solid var(--ln);border-radius:4px;background:var(--bg);color:var(--ink)}
+@media(prefers-reduced-motion:no-preference){article{animation:in .25s}}@keyframes in{from{opacity:0}}
+</style></head><body>
+<header>
+<h1>Phy-<span>Wiki</span></h1>
+<p class="sub">Solusi dan proses analitik fisika untuk berbagai kasus, kondisi, dan limit, dihimpun dari basis data, sumber daring, dan penyelesaian mandiri oleh AI.</p>
+<form id="f"><input type="search" id="q" placeholder="mis. dipol listrik r ≫ d, gas Fermi T → 0, ..." aria-label="Kueri" autofocus><button>Cari</button></form>
+<div class="bar"><button class="g" id="set" type="button">Pengaturan AI</button><button class="g" id="exp" type="button">Ekspor basis data</button><button class="g" id="imp" type="button">Impor</button><input type="file" id="file" accept=".json" hidden><span id="cnt"></span></div>
+</header>
+<main id="out"></main>
+<dialog id="dlg"><form method="dialog"><h3 class="ui" style="margin:0">Pengaturan AI</h3>
+<label>Penyedia<select id="prov"><option value="gemini">Google Gemini</option><option value="anthropic">Anthropic Claude</option></select></label>
+<label>Model<input id="model" placeholder="gemini-2.5-flash"></label>
+<label>API key<input id="key" type="password" autocomplete="off"></label>
+<p class="note">Kunci disimpan hanya di browser ini (localStorage) dan dikirim langsung ke penyedia. Jangan menaruhnya di repository.</p>
+<button id="ok">Simpan</button></form></dialog>
+<script>
+const $=s=>document.querySelector(s),K='phywiki.';
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(K+k))??d}catch{return d}},sv=(k,v)=>localStorage.setItem(K+k,JSON.stringify(v));
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tok=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(w=>w.length>1);
+let seed=[],mine=ls('mine',[]);const all=()=>[...mine,...seed];
+const cfg=()=>ls('cfg',{prov:'gemini',model:'gemini-2.5-flash',key:''});
+const SB={seed:['Entri awal','belum diperiksa pakar; periksa terhadap rujukan'],ai:['Dihitung mandiri oleh AI','belum diverifikasi; periksa setiap langkah'],user:['Entri pengguna','']};
+function score(e,q){const h=tok([e.title,e.field,e.problem,...(e.tags||[]),...(e.conditions||[])].join(' '));const s=new Set(h);return q.reduce((a,w)=>a+(s.has(w)?2:h.some(x=>x.includes(w))?1:0),0)}
+function card(e){const [b,n]=SB[e.status]||SB.user;
+return `<article class="${e.status==='ai'?'ai':e.status==='user'?'user':''}"><div class="badge"><b>${b}</b>${n?' · '+n:''} · ${esc(e.field)}${e.model?' · '+esc(e.model):''}</div>
+<h2>${esc(e.title)}</h2><p>${esc(e.problem)}</p>
+<div class="cond">${(e.conditions||[]).map(c=>`<span>${esc(c)}</span>`).join('')}</div>
+<div class="res">${esc(e.result)}</div>
+<details open><summary>Proses analitik</summary><ol>${(e.steps||[]).map(s=>`<li><b>${esc(s.t)}</b><div>${esc(s.m)}</div><div class="why">${esc(s.why)}</div></li>`).join('')}</ol></details>
+${(e.relations||[]).length?`<details><summary>Interelasi besaran</summary><ul>${e.relations.map(r=>`<li><b>${esc(r.q)}</b>: ${esc(r.rel)}</li>`).join('')}</ul></details>`:''}
+<details><summary>Rujukan</summary><ul class="src">${(e.sources||[]).map(s=>`<li>${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.t)}</a>`:esc(s.t)}</li>`).join('')}</ul></details>
+${e.status!=='seed'?`<button class="g" data-del="${esc(e.id)}">Hapus entri ini</button>`:''}</article>`}
+function math(){if(window.renderMathInElement)renderMathInElement($('#out'),{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false})}
+function draw(h){$('#out').innerHTML=h;math();$('#cnt').textContent=all().length+' entri'}
+async function web(q){const r=[];
+try{for(const l of['id','en']){const j=await(await fetch(`https://${l}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=3&format=json&origin=*`)).json();j.query.search.forEach(x=>r.push({t:`Wikipedia (${l}): ${x.title}`,url:`https://${l}.wikipedia.org/wiki/${encodeURIComponent(x.title.replace(/ /g,'_'))}`}))}}catch{}
+try{const j=await(await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per-page=5&select=title,doi,publication_year`)).json();j.results.forEach(x=>r.push({t:`${x.title} (${x.publication_year})`,url:x.doi||''}))}catch{}
+return r}
+async function ask(p){const c=cfg();if(!c.key)throw Error('API key belum diisi (Pengaturan AI).');
+if(c.prov==='gemini'){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.model}:generateContent?key=${c.key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:{responseMimeType:'application/json'}})});const j=await r.json();if(!r.ok)throw Error(j.error?.message||r.status);return j.candidates[0].content.parts[0].text}
+const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':c.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:c.model,max_tokens:4000,messages:[{role:'user',content:p}]})});const j=await r.json();if(!r.ok)throw Error(j.error?.message||r.status);return j.content.map(x=>x.text||'').join('')}
+const SCHEMA=`{"title":"","field":"","problem":"","conditions":["asumsi/kondisi/limit"],"result":"$$LaTeX hasil akhir$$","steps":[{"t":"judul langkah","m":"$$LaTeX$$","why":"alasan asumsi/identitas boleh dipakai"}],"relations":[{"q":"besaran","rel":"hubungan, LaTeX dalam $...$"}],"sources":[{"t":"rujukan buku/paper yang Anda yakini ada"}],"tags":[""]}`;
+async function solve(q,ext){const b=$('#solve');b.disabled=true;b.textContent='Menyelesaikan...';
+const p=`Anda asisten fisika teoretik. Selesaikan secara analitik: "${q}". Mulai dari hukum/prinsip umum, lalu terapkan kondisi/asumsi/limit, dengan langkah runtut dan lengkap serta alasan setiap asumsi dan identitas. Tulis dalam bahasa Indonesia formal dan ringkas. Rumus LaTeX: $...$ inline, $$...$$ blok; gandakan backslash agar JSON valid. Cantumkan hanya rujukan yang benar-benar Anda yakini; jangan mengarang halaman. Sumber daring terkait (konteks): ${JSON.stringify(ext.slice(0,6).map(x=>x.t))}. Balas HANYA JSON: ${SCHEMA}`;
+try{const t=(await ask(p)).replace(/^```json|```$/gm,'').trim();const e=JSON.parse(t);
+e.id='ai-'+Date.now();e.status='ai';e.model=cfg().model;e.sources=[...(e.sources||[]),...ext.slice(0,4)];mine.unshift(e);sv('mine',mine);draw(card(e)+'<p class="note">Entri disimpan di basis data lokal browser ini. Gunakan Ekspor untuk memasukkannya ke repository.</p>')}
+catch(x){b.disabled=false;b.textContent='Selesaikan dengan AI';alert('Gagal: '+x.message)}}
+async function search(raw){const q=tok(raw);if(!q.length)return;
+const hits=all().map(e=>[score(e,q),e]).filter(x=>x[0]>=2).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+draw((hits.length?hits.map(card).join(''):'<p class="note">Tidak ada entri yang cocok di basis data.</p>')+'<p class="note"><button id="solve">Selesaikan dengan AI</button> Hasil dilabeli sebagai perhitungan mandiri dan perlu diperiksa.</p><div class="ext note" id="ext">Mencari sumber daring...</div>');
+$('#solve').onclick=()=>solve(raw,window._ext||[]);
+const e=await web(raw);window._ext=e;$('#ext').innerHTML=e.length?'<b>Sumber daring terkait</b><ul class="ext">'+e.map(x=>`<li>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.t)}</a>`:esc(x.t)}</li>`).join('')+'</ul>':'Sumber daring tidak tersedia.'}
+$('#f').onsubmit=e=>{e.preventDefault();search($('#q').value)};
+$('#out').onclick=e=>{const id=e.target.dataset?.del;if(id&&confirm('Hapus entri?')){mine=mine.filter(x=>x.id!==id);sv('mine',mine);draw('')}};
+$('#set').onclick=()=>{const c=cfg();$('#prov').value=c.prov;$('#model').value=c.model;$('#key').value=c.key;$('#dlg').showModal()};
+$('#prov').onchange=()=>$('#model').value=$('#prov').value==='gemini'?'gemini-2.5-flash':'claude-sonnet-4-5';
+$('#ok').onclick=()=>sv('cfg',{prov:$('#prov').value,model:$('#model').value.trim(),key:$('#key').value.trim()});
+$('#exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(mine,null,1)],{type:'application/json'}));a.download='entri-saya.json';a.click()};
+$('#imp').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());j.forEach(x=>{if(x.title&&x.steps&&!mine.some(m=>m.id===x.id))mine.push({status:'user',...x,id:x.id||'u-'+Math.random().toString(36).slice(2)})});sv('mine',mine);draw('');}catch{alert('Berkas JSON tidak valid.')}};
+window.addEventListener('load',async()=>{try{seed=await(await fetch('data/entries.json')).json()}catch{}$('#cnt').textContent=all().length+' entri'});
+</script></body></html>
