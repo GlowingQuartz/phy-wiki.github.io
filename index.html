@@ -7,8 +7,10 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-:root{--bg:#eef1f4;--sf:#fff;--ink:#14202b;--mu:#5a6a78;--ln:#cdd6de;--ac:#0b6e6e;--ai:#a8520a;--sd:#3b5b8c}
-@media(prefers-color-scheme:dark){:root{--bg:#10171d;--sf:#18212a;--ink:#e6ecf1;--mu:#93a3b1;--ln:#2b3844;--ac:#4fc3c3;--ai:#f0a35e;--sd:#8fb2e8}}
+:root{--bg:#eef1f4;--sf:#fff;--ink:#14202b;--mu:#5a6a78;--ln:#cdd6de;--ac:#0b6e6e;--ai:#a8520a;--sd:#3b5b8c;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10171d;--sf:#18212a;--ink:#e6ecf1;--mu:#93a3b1;--ln:#2b3844;--ac:#4fc3c3;--ai:#f0a35e;--sd:#8fb2e8;color-scheme:dark}}
+[data-theme=dark]{--bg:#10171d;--sf:#18212a;--ink:#e6ecf1;--mu:#93a3b1;--ln:#2b3844;--ac:#4fc3c3;--ai:#f0a35e;--sd:#8fb2e8;color-scheme:dark}
+[hidden]{display:none!important}#theme{padding:.45rem;border:1px solid var(--ln);border-radius:6px;background:var(--sf);color:var(--ink)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Source Serif 4",Georgia,serif}
 button,input,select,summary,.ui{font-family:"IBM Plex Sans",system-ui,sans-serif}
 header{padding:2rem 1rem 1rem;max-width:860px;margin:auto}
@@ -21,16 +23,16 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem;font-size:.85rem;color:var(--mu);align-items:center}
 main{max-width:860px;margin:auto;padding:0 1rem 3rem}
 article{background:var(--sf);border:1px solid var(--ln);border-left:5px solid var(--sd);border-radius:6px;padding:1.2rem 1.4rem;margin:1rem 0}
-article.ai{border-left-color:var(--ai)}article.web,article.user{border-left-color:var(--ac)}
+article.ai{border-left-color:var(--ai)}article.web,article.user,article.lib{border-left-color:var(--ac)}
 article h2{margin:.2rem 0;font-size:1.35rem;line-height:1.3}
-.badge{font:500 .78rem "IBM Plex Sans";color:var(--mu)}.badge b{color:var(--sd)}article.ai .badge b{color:var(--ai)}article.web .badge b,article.user .badge b{color:var(--ac)}
+.badge{font:500 .78rem "IBM Plex Sans";color:var(--mu)}.badge b{color:var(--sd)}article.ai .badge b{color:var(--ai)}article.web .badge b,article.user .badge b,article.lib .badge b{color:var(--ac)}
 .res{background:var(--bg);border-radius:6px;padding:.4rem .8rem;overflow-x:auto;margin:.8rem 0}
 ol{padding-left:1.3rem}ol li{margin:.9rem 0}li .why{color:var(--mu);font-size:.93rem}
-.cond span{display:inline-block;border:1px solid var(--ln);border-radius:4px;padding:0 .5rem;margin:0 .3rem .3rem 0;font:.82rem "IBM Plex Sans"}
+.cond>span{display:inline-block;border:1px solid var(--ln);border-radius:4px;padding:0 .5rem;margin:0 .3rem .3rem 0;font:.82rem "IBM Plex Sans"}
 details{margin:.6rem 0}summary{cursor:pointer;font-weight:600;font-size:.9rem}
 .src li,.ext li,.lib li{font-size:.92rem;margin:.4rem 0}a{color:var(--ac)}
 .note{color:var(--mu);font:.88rem "IBM Plex Sans";margin:1rem 0}.note b{color:var(--ink)}
-.act{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.act{display:flex;flex-direction:column;align-items:stretch;gap:.5rem;margin:1rem 0}.act button{text-align:left}
 .snip{color:var(--mu);font-size:.85rem}
 dialog{border:1px solid var(--ln);border-radius:10px;background:var(--sf);color:var(--ink);max-width:520px;width:94%;padding:1.4rem 1.6rem}
 dialog::backdrop{background:rgba(0,0,0,.45)}dialog h3{margin:0 0 1rem;font:600 1.3rem "IBM Plex Sans"}
@@ -44,7 +46,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}dialog h3{margin:0 0 1rem;font:600 1
 <h1>Phy-<span>Wiki</span></h1>
 <p class="sub">Solusi dan proses analitik fisika untuk berbagai kasus, kondisi, dan limit, dihimpun dari basis data, pustaka pribadi, internet, dan penyelesaian mandiri oleh AI.</p>
 <form id="f"><input type="search" id="q" placeholder="mis. dipol listrik r ≫ d, gas Fermi T → 0, ..." aria-label="Kueri" autofocus><button>Cari</button></form>
-<div class="bar"><button class="g" id="lib" type="button">Pustaka saya</button><button class="g" id="set" type="button">Pengaturan</button><span id="cnt"></span></div>
+<div class="bar"><button class="g" id="lib" type="button">Pustaka saya</button><button class="g" id="set" type="button">Pengaturan</button><select id="theme" aria-label="Tema"><option value="">Tema: sistem</option><option value="light">Tema: terang</option><option value="dark">Tema: gelap</option></select><button class="g" id="exp" type="button" hidden>Ekspor lokal (dev)</button><span id="cnt"></span></div>
 </header>
 <main id="out"></main>
 
@@ -57,6 +59,8 @@ dialog::backdrop{background:rgba(0,0,0,.45)}dialog h3{margin:0 0 1rem;font:600 1
 <ol><li>Gemini: buka <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>, masuk dengan akun Google, pilih <i>Create API key</i>, salin kuncinya.</li>
 <li>Claude: buka <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console</a>, pilih <i>Create Key</i>; saldo kredit diperlukan.</li></ol>
 Pencarian internet oleh AI memakai Google Search (Gemini) atau web search (Claude, harus diaktifkan di Console) dan dapat dikenai biaya.</div>
+<label class="hint"><input type="checkbox" id="auto"> Cari internet otomatis dengan AI bila tidak ada entri yang cocok</label>
+<details class="hint"><summary>Pengembang</summary><div class="row"><label for="dk">Kunci</label><input id="dk" type="password" autocomplete="off"></div><span id="dst"></span></details>
 <div class="foot"><button class="g" value="x">Batal</button><button id="ok" value="ok">Simpan</button></div></form></dialog>
 
 <dialog id="dlib"><form method="dialog"><h3>Pustaka saya</h3>
@@ -74,9 +78,9 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const STOP=new Set('yang dan di pada untuk dari ke the of in at for to a an dengan atau adalah itu ini cari carikan solusi'.split(' '));
 const tok=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(w=>w&&!STOP.has(w));
 const MODELS={gemini:[['gemini-3.8-flash','Gemini 3.8 Flash'],['gemini-2.5-pro','Gemini 2.5 Pro']],anthropic:[['claude-sonnet-5-5','Claude Sonnet 5.5'],['claude-opus-5-5','Claude Opus 5.5'],['claude-haiku-5-5','Claude Haiku 5.5']]};
-let seed=[],mine=ls('mine',[]),chunks=[];const all=()=>[...mine,...seed];
-const cfg=()=>({prov:'gemini',model:'gemini-3.8-flash',key:'',...ls('cfg',{})});
-const SB={seed:['Entri awal','belum diperiksa pakar; periksa terhadap rujukan'],ai:['Dihitung mandiri oleh AI','tanpa sumber luar; belum diverifikasi, periksa setiap langkah'],web:['Dihimpun dari sumber luar, disusun AI','periksa kesesuaian dengan rujukan'],user:['Entri pengguna','']};
+let seed=[],mine=ls('mine',[]),chunks=[],seq=0,dev=false,SUBMIT='';const all=()=>{const m=new Map();[...mine,...seed].forEach(e=>m.has(e.id)||m.set(e.id,e));return[...m.values()]};
+const cfg=()=>({prov:'gemini',model:'gemini-3.8-flash',key:'',auto:true,dk:'',...ls('cfg',{})});
+const SB={seed:['Entri awal','belum diperiksa pakar; periksa terhadap rujukan'],ai:['Dihitung mandiri oleh AI','tanpa sumber luar; belum diverifikasi, periksa setiap langkah'],web:['Dihimpun dari sumber luar, disusun AI','periksa kesesuaian dengan rujukan'],user:['Entri pengguna',''],lib:['Disusun AI dari Pustaka Anda','periksa kesesuaian dengan buku']};
 
 /* ---------- pustaka (IndexedDB) ---------- */
 const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('phywiki',1);r.onupgradeneeded=()=>r.result.createObjectStore('c',{autoIncrement:true}).createIndex('book','book');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
@@ -98,14 +102,14 @@ return chunks.map(c=>[q.filter(w=>c.set.has(w)).length,c]).filter(x=>x[0]>=need)
 function score(e,q){const h=new Set(tok([e.title,e.field,e.problem,...(e.tags||[]),...(e.conditions||[])].join(' ')));
 return q.filter(w=>h.has(w)||(w.length>=4&&[...h].some(x=>x.startsWith(w)))).length/q.length}
 function card(e){const [b,n]=SB[e.status]||SB.user;
-return `<article class="${e.status==='ai'?'ai':e.status==='web'?'web':e.status==='user'?'user':''}"><div class="badge"><b>${b}</b>${n?' · '+n:''} · ${esc(e.field)}${e.model?' · '+esc(e.model):''}</div>
+return `<article class="${['ai','web','user','lib'].includes(e.status)?e.status:''}"><div class="badge"><b>${b}</b>${n?' · '+n:''} · ${esc(e.field)}${e.model?' · '+esc(e.model):''}</div>
 <h2>${esc(e.title)}</h2><p>${esc(e.problem)}</p>
 <div class="cond">${(e.conditions||[]).map(c=>`<span>${esc(c)}</span>`).join('')}</div>
 <div class="res">${esc(e.result)}</div>
 <details open><summary>Proses analitik</summary><ol>${(e.steps||[]).map(s=>`<li><b>${esc(s.t)}</b><div>${esc(s.m)}</div><div class="why">${esc(s.why)}</div></li>`).join('')}</ol></details>
 ${(e.relations||[]).length?`<details><summary>Interelasi besaran</summary><ul>${e.relations.map(r=>`<li><b>${esc(r.q)}</b>: ${esc(r.rel)}</li>`).join('')}</ul></details>`:''}
 <details><summary>Rujukan</summary><ul class="src">${(e.sources||[]).map(s=>`<li>${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.t)}</a>`:esc(s.t)}</li>`).join('')}</ul></details>
-${e.status!=='seed'?`<button class="g" data-del="${esc(e.id)}">Hapus entri ini</button>`:''}</article>`}
+${mine.some(m=>m.id===e.id)?`<div class="act" style="flex-direction:row"><button class="g" data-del="${esc(e.id)}">Hapus entri ini</button>${dev?`<button class="g" data-pub="${esc(e.id)}">Terbitkan ke entries.json (terkurasi)</button>`:''}</div>`:''}</article>`}
 function draw(h){$('#out').innerHTML=h;if(window.renderMathInElement)renderMathInElement($('#out'),{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});$('#cnt').textContent=all().length+' entri'}
 
 /* ---------- sumber daring (paper) ---------- */
@@ -113,8 +117,6 @@ async function web(q){const r=[];
 try{const j=await(await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per-page=5&select=title,doi,publication_year,authorships,primary_location`)).json();
 j.results.forEach(x=>{const a=(x.authorships||[]).map(y=>y.author.display_name),au=a.length>3?a.slice(0,3).join(', ')+', dkk.':a.join(', '),jr=x.primary_location?.source?.display_name;
 r.push({t:`${x.title}${au?' oleh '+au:''}${jr?', '+jr:''}${x.publication_year?' ('+x.publication_year+')':''}`,url:x.doi||''})})}catch{}
-try{const j=await(await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=2&format=json&origin=*`)).json();
-j.query.search.forEach(x=>r.push({t:`Wikipedia: ${x.title}`,url:'https://en.wikipedia.org/wiki/'+encodeURIComponent(x.title.replace(/ /g,'_'))}))}catch{}
 return r}
 
 /* ---------- AI ---------- */
@@ -126,35 +128,44 @@ const body={model:c.model,max_tokens:6000,messages:[{role:'user',content:p}]};if
 const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':c.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.error?.message||r.status);
 const src=[];j.content.forEach(x=>(x.citations||[]).forEach(y=>y.url&&src.push({t:y.title||y.url,url:y.url})));return{text:j.content.map(x=>x.text||'').join(''),src}}
 const SCHEMA=`{"title":"","field":"","problem":"","conditions":["asumsi/kondisi/limit"],"result":"$$LaTeX$$","steps":[{"t":"judul langkah","m":"$$LaTeX$$","why":"alasan asumsi/identitas boleh dipakai"}],"relations":[{"q":"besaran","rel":"hubungan, LaTeX dalam $...$"}],"sources":[{"t":"rujukan yang benar-benar ada, dengan bab/halaman bila tahu"}],"tags":[""]}`;
-async function solve(q,mode){const B=document.querySelectorAll('.act button');B.forEach(b=>b.disabled=true);
-const useWeb=mode==='src',lib=useWeb?libHits(tok(q)):[],ext=window._ext||[];
-let p=`Anda asisten fisika teoretik. Kueri: "${q}". `+(useWeb?`Cari di internet (solution manual, catatan kuliah, paper) dan pada kutipan pustaka berikut, lalu susun solusi/proses analitik yang berasal dari sumber tersebut; lengkapi bagian rumpang dan tandai bagian yang Anda lengkapi sendiri di "why". Kutipan pustaka pengguna: ${JSON.stringify(lib.map(c=>`[${c.book}, hlm. ${c.page}] ${c.text.slice(0,900)}`))}. `:`Selesaikan sendiri secara analitik tanpa sumber luar. `)+`Mulai dari hukum/prinsip umum, terapkan kondisi/asumsi/limit, langkah runtut dan lengkap dengan alasan setiap asumsi dan identitas. Bahasa Indonesia formal dan ringkas. LaTeX: $...$ inline, $$...$$ blok; gandakan backslash agar JSON valid. Jangan mengarang rujukan atau halaman. Balas HANYA JSON: ${SCHEMA}`;
+async function snips(q){for(const l of['id','en']){try{const j=await(await fetch(`https://${l}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=2&prop=extracts&exintro&explaintext&exchars=450&format=json&origin=*`)).json();const p=Object.values(j.query?.pages||{}).sort((a,b)=>a.index-b.index);if(p.length)return p.map(x=>({t:`Wikipedia (${l}): ${x.title}`,url:`https://${l}.wikipedia.org/wiki/${encodeURIComponent(x.title.replace(/ /g,'_'))}`,x:x.extract||''}))}catch{}}return[]}
+const submit=async(e,cur)=>{if(!SUBMIT)return false;try{return(await fetch(SUBMIT,{method:'POST',headers:{'Content-Type':'application/json',...(dev?{'X-Dev-Key':cfg().dk}:{})},body:JSON.stringify({entry:e,target:cur?'curated':'community'})})).ok}catch{return false}};
+async function solve(q,mode,my){const B=document.querySelectorAll('#bai,#bsrc');B.forEach(b=>b.disabled=true);
+const useWeb=mode==='src',lib=libHits(tok(q)),ext=window._ext||[];
+const p=`Anda asisten fisika teoretik. Kueri: "${q}". `+(useWeb?`Cari di internet (solution manual, catatan kuliah, paper) dan manfaatkan kutipan pustaka pengguna; susun solusi/proses analitik yang berasal dari sumber tersebut, lengkapi bagian rumpang, dan tandai bagian yang Anda lengkapi sendiri di "why". `:`Jangan memakai sumber internet; manfaatkan kutipan pustaka pengguna bila relevan, bila tidak selesaikan sendiri. `)+`Kutipan pustaka pengguna: ${JSON.stringify(lib.map(c=>`[${c.book}, hlm. ${c.page}] ${c.text.slice(0,900)}`))}. Mulai dari hukum/prinsip umum, terapkan kondisi/asumsi/limit, langkah runtut dan lengkap dengan alasan setiap asumsi dan identitas. Bahasa Indonesia formal dan ringkas. Semua rumus, termasuk di "conditions", ditulis dalam $...$ (inline) atau $$...$$ (blok); gandakan backslash agar JSON valid. Jangan mengarang rujukan atau halaman. Balas HANYA JSON: ${SCHEMA}`;
 try{const a=await ask(p,useWeb);const e=JSON.parse(a.text.replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/,'$1'));
-const used=useWeb&&(a.src.length||lib.length);
-e.id=(used?'web-':'ai-')+Date.now();e.status=used?'web':'ai';e.model=cfg().model;
-e.sources=[...(used?lib.map(c=>({t:`${c.book}, hlm. ${c.page} (pustaka pengguna)`})):[]),...(e.sources||[]),...(used?a.src:[]),...(used?ext.slice(0,3):[])];
-mine.unshift(e);sv('mine',mine);draw(card(e))}
-catch(x){B.forEach(b=>b.disabled=false);alert('Gagal: '+x.message)}}
-
-/* ---------- pencarian ---------- */
-async function search(raw){const q=tok(raw);if(!q.length)return;
-const hits=all().map(e=>[score(e,q),e]).filter(x=>x[0]>=.8).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
-const lh=libHits(q);
+const st=a.src.length?'web':lib.length?'lib':'ai';
+e.id=st+'-'+Date.now();e.status=st;e.model=cfg().model;
+e.sources=[...lib.map(c=>({t:`${c.book}, hlm. ${c.page} (pustaka pengguna)`})),...(e.sources||[]),...a.src,...(useWeb?ext.slice(0,3):[])];
+mine.unshift(e);sv('mine',mine);const ok=submit(e);
+if(my!==seq)return;draw(card(e));
+if(await ok)$('#out').insertAdjacentHTML('beforeend','<p class="note">Terkirim ke basis data bersama; tampil bagi semua pengguna setelah situs diperbarui (±1–2 menit).</p>')}
+catch(x){if(my===seq){B.forEach(b=>b.disabled=false);alert('Gagal: '+x.message)}}}
+async function search(raw){const q=tok(raw);if(!q.length)return;const my=++seq;window._ext=[];
+const hits=all().map(e=>[score(e,q),e]).filter(x=>x[0]>=.8).sort((a,b)=>b[0]-a[0]).map(x=>x[1]),lh=libHits(q);
 draw((hits.length?hits.map(card).join(''):'<p class="note">Tidak ada entri yang cocok di basis data.</p>')
 +(lh.length?`<div class="note"><b>Dari pustaka Anda</b><ul class="lib">${lh.map(c=>`<li>${esc(c.book)}, hlm. ${c.page}<div class="snip">${esc(c.text.slice(0,260))}...</div></li>`).join('')}</ul></div>`:'')
-+'<div class="act"><button id="bsrc">Cari di internet dan susun dengan AI</button><button class="g" id="bai">Selesaikan mandiri dengan AI</button></div><div class="ext note" id="ext">Mencari sumber daring...</div>');
-$('#bsrc').onclick=()=>solve(raw,'src');$('#bai').onclick=()=>solve(raw,'ai');
-const e=await web(raw);window._ext=e;
-$('#ext').innerHTML=e.length?`<b>Sumber daring terkait:</b><br>"${esc(raw)}"<ul class="ext">${e.map(x=>`<li>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.t)}</a>`:esc(x.t)}</li>`).join('')}</ul>`:'Sumber daring tidak tersedia.'}
++'<div class="act"><button class="g" id="bai">Selesaikan mandiri dengan AI (hanya dengan Pustaka Saya)</button><button id="bsrc">Selesaikan berbantu internet dengan AI (menggunakan sumber eksternal)</button></div><div class="ext note" id="ext">Mencari sumber daring...</div>');
+$('#bai').onclick=()=>solve(raw,'ai',my);$('#bsrc').onclick=()=>solve(raw,'src',my);
+const[e,sn]=await Promise.all([web(raw),snips(raw)]);if(my!==seq)return;window._ext=[...e,...sn.map(x=>({t:x.t,url:x.url}))];
+const li=x=>`<li>${x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.t)}</a>`:esc(x.t)}${x.x?`<div class="snip">${esc(x.x)}</div>`:''}</li>`;
+$('#ext').innerHTML=`<b>Sumber daring terkait:</b><br>"${esc(raw)}"`+(sn.length?`<ul class="ext">${sn.map(li).join('')}</ul>`:'')+(e.length?`<ul class="ext">${e.map(li).join('')}</ul>`:'')+(sn.length||e.length?'':'<br>Tidak ditemukan.');
+if(!hits.length&&cfg().auto&&cfg().key)solve(raw,'src',my)}
 
 /* ---------- UI ---------- */
 $('#f').onsubmit=e=>{e.preventDefault();search($('#q').value)};
-$('#out').onclick=e=>{const id=e.target.dataset?.del;if(id&&confirm('Hapus entri?')){mine=mine.filter(x=>x.id!==id);sv('mine',mine);draw('')}};
+$('#out').onclick=async e=>{const d=e.target.dataset||{};if(d.del&&confirm('Hapus entri?')){mine=mine.filter(x=>x.id!==d.del);sv('mine',mine);draw('')}
+if(d.pub){const x=mine.find(m=>m.id===d.pub);alert(await submit(x,true)?'Diterbitkan ke entries.json.':'Gagal menerbitkan.')}};
 const fillModels=m=>{$('#model').innerHTML=MODELS[$('#prov').value].map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('');if(m)$('#model').value=m};
 $('#prov').onchange=()=>fillModels();
-$('#set').onclick=()=>{const c=cfg();$('#prov').value=c.prov;fillModels(c.model);$('#key').value=c.key;$('#dset').showModal()};
-$('#ok').onclick=()=>sv('cfg',{prov:$('#prov').value,model:$('#model').value,key:$('#key').value.trim()});
+$('#set').onclick=()=>{const c=cfg();$('#prov').value=c.prov;fillModels(c.model);$('#key').value=c.key;$('#auto').checked=c.auto;$('#dk').value=c.dk;$('#dset').showModal()};
+$('#ok').onclick=()=>{sv('cfg',{prov:$('#prov').value,model:$('#model').value,key:$('#key').value.trim(),auto:$('#auto').checked,dk:$('#dk').value.trim()});checkDev()};
 $('#lib').onclick=()=>{$('#prog').textContent='';$('#dlib').showModal()};
 $('#up').onclick=upload;$('#books').onclick=e=>{const n=e.target.dataset?.book;if(n&&confirm('Hapus buku ini dari pustaka?'))delBook(n)};
-window.addEventListener('load',async()=>{if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';try{seed=await(await fetch('data/entries.json')).json()}catch{}await loadLib();$('#cnt').textContent=all().length+' entri'});
+const applyTheme=t=>t?document.documentElement.dataset.theme=t:delete document.documentElement.dataset.theme;
+applyTheme(ls('theme',''));$('#theme').value=ls('theme','');$('#theme').onchange=e=>{sv('theme',e.target.value);applyTheme(e.target.value)};
+async function checkDev(){const k=cfg().dk;dev=false;if(SUBMIT&&k){try{dev=(await fetch(SUBMIT.replace(/\/$/,'')+'/verify',{method:'POST',headers:{'X-Dev-Key':k}})).ok}catch{}}$('#exp').hidden=!dev;$('#dst').textContent=dev?'Mode pengembang aktif.':''}
+$('#exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(mine,null,1)],{type:'application/json'}));a.download='entri-lokal.json';a.click()};
+window.addEventListener('load',async()=>{if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const g=async u=>{try{return await(await fetch(u,{cache:'no-cache'})).json()}catch{return null}};
+SUBMIT=((await g('data/config.json'))||{}).submitUrl||'';seed=[...(await g('data/entries.json')||[]),...(await g('data/community.json')||[])];await checkDev();await loadLib();$('#cnt').textContent=all().length+' entri'});
 </script></body></html>
