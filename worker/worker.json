@@ -1,1 +1,41 @@
+// ============================================================
+// Phy-Wiki Worker (Cloudflare). Cara pakai:
+// 1) Ganti empat nilai di CONFIG di bawah.
+// 2) Tempel SELURUH berkas ini di editor Worker pada dasbor Cloudflare, lalu Deploy.
+// PERINGATAN: GH_TOKEN dan DEV_KEY adalah rahasia. Isi keduanya HANYA pada salinan
+// yang ditempel di Cloudflare. JANGAN commit berkas ini ke GitHub setelah keduanya
+// terisi (token yang bocor di repository publik akan dicabut GitHub dan dapat disalahgunakan).
+// Alternatif lebih aman: biarkan keduanya kosong di sini, lalu isi sebagai "Secret"
+// di Worker → Settings → Variables and Secrets dengan nama yang sama.
+// ============================================================
+const CONFIG={
+  ORIGIN:'https://glowingquartz.github.io',      
+  GH_REPO:'glowingquartz/phy-wiki.github.io',              
+  BRANCH:'main',                            
+  GH_TOKEN:'',                              // fine-grained token: hanya repo ini, izin Contents: Read and write
+  DEV_KEY:''                                // kunci pengembang karangan Anda (panjang dan acak)
+};
 
+const dec=c=>new TextDecoder().decode(Uint8Array.from(atob(c.replace(/\n/g,'')),x=>x.charCodeAt(0)));
+const enc=s=>{let t='';new TextEncoder().encode(s).forEach(x=>t+=String.fromCharCode(x));return btoa(t)};
+export default{async fetch(req,env){
+const E={...CONFIG,...env};
+const h={'Access-Control-Allow-Origin':E.ORIGIN,'Access-Control-Allow-Headers':'Content-Type,X-Dev-Key','Access-Control-Allow-Methods':'POST,OPTIONS'};
+const J=(b,s=200)=>new Response(JSON.stringify(b),{status:s,headers:{...h,'Content-Type':'application/json'}});
+if(req.method==='OPTIONS')return new Response(null,{headers:h});
+if(req.headers.get('Origin')!==E.ORIGIN)return J({error:'origin'},403);
+const dev=!!E.DEV_KEY&&req.headers.get('X-Dev-Key')===E.DEV_KEY;
+if(new URL(req.url).pathname==='/verify')return dev?J({ok:1}):J({error:'key'},401);
+let b;try{b=await req.json()}catch{return J({error:'json'},400)}
+const e=b.entry;
+if(!e||typeof e.title!=='string'||typeof e.result!=='string'||!Array.isArray(e.steps)||!e.steps.length||JSON.stringify(e).length>60000)return J({error:'invalid'},400);
+const cur=dev&&b.target==='curated';
+if(!cur&&!['ai','web','lib'].includes(e.status))return J({error:'status'},400);
+const c={id:String(e.id||'').slice(0,60),title:e.title.slice(0,200),field:String(e.field||'').slice(0,80),tags:(e.tags||[]).slice(0,12),problem:String(e.problem||'').slice(0,800),conditions:(e.conditions||[]).slice(0,12),result:e.result,steps:e.steps.slice(0,30),relations:(e.relations||[]).slice(0,12),sources:(e.sources||[]).slice(0,15),status:cur?'user':e.status,model:String(e.model||'').slice(0,40),added:new Date().toISOString()};
+const api=`https://api.github.com/repos/${E.GH_REPO}/contents/data/${cur?'entries':'community'}.json`,br=E.BRANCH||'main';
+const gh={Authorization:`Bearer ${E.GH_TOKEN}`,'User-Agent':'phywiki',Accept:'application/vnd.github+json'};
+for(let i=0;i<3;i++){const f=await(await fetch(`${api}?ref=${br}`,{headers:gh})).json();
+const arr=JSON.parse(dec(f.content)).filter(x=>x.id!==c.id);arr.push(c);
+const r=await fetch(api,{method:'PUT',headers:gh,body:JSON.stringify({message:`${cur?'Entri terkurasi':'Entri komunitas'}: ${c.title}`.slice(0,100),content:enc(JSON.stringify(arr,null,1)),sha:f.sha,branch:br})});
+if(r.ok)return J({ok:1});if(r.status!==409&&r.status!==422)return J({error:'github'},502)}
+return J({error:'conflict'},503)}}
